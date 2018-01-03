@@ -20,6 +20,7 @@
 #include <linux/firmware.h>
 #include <linux/etherdevice.h>
 #include <linux/module.h>
+#include <linux/compiler.h>
 
 #include <net/mac80211.h>
 
@@ -411,12 +412,13 @@ static int p54_conf_tx(struct ieee80211_hw *dev,
 		       const struct ieee80211_tx_queue_params *params)
 {
 	struct p54_common *priv = dev->priv;
+	struct p54_edcf_queue_param *p54_q;
 	int ret;
 
 	mutex_lock(&priv->conf_mutex);
-	if (queue < dev->queues) {
-		P54_SET_QUEUE(priv->qos_params[queue], params->aifs,
-			params->cw_min, params->cw_max, params->txop);
+	if ((p54_q = nospec_array_ptr(priv->qos_params, queue, dev->queues))) {
+		P54_SET_QUEUE(p54_q[0], params->aifs, params->cw_min,
+				params->cw_max, params->txop);
 		ret = p54_set_edcf(priv);
 	} else
 		ret = -EINVAL;
