@@ -9,6 +9,7 @@
 #include <linux/ktime.h>
 #include <linux/pci.h>
 #include <linux/ratelimit.h>
+#include <linux/compiler.h>
 #include <linux/vmalloc.h>
 #include <linux/bsg-lib.h>
 #include <scsi/scsi_tcq.h>
@@ -2275,7 +2276,7 @@ qlafx00_ioctl_iosb_entry(scsi_qla_host_t *vha, struct req_que *req,
 static void
 qlafx00_status_entry(scsi_qla_host_t *vha, struct rsp_que *rsp, void *pkt)
 {
-	srb_t		*sp;
+	srb_t		*sp, **elem;
 	fc_port_t	*fcport;
 	struct scsi_cmnd *cp;
 	struct sts_entry_fx00 *sts;
@@ -2304,8 +2305,9 @@ qlafx00_status_entry(scsi_qla_host_t *vha, struct rsp_que *rsp, void *pkt)
 	req = ha->req_q_map[que];
 
 	/* Validate handle. */
-	if (handle < req->num_outstanding_cmds)
-		sp = req->outstanding_cmds[handle];
+	if ((elem = nospec_array_ptr(req->outstanding_cmds, handle,
+					req->num_outstanding_cmds)))
+		sp = *elem;
 	else
 		sp = NULL;
 
@@ -2626,7 +2628,7 @@ static void
 qlafx00_multistatus_entry(struct scsi_qla_host *vha,
 	struct rsp_que *rsp, void *pkt)
 {
-	srb_t		*sp;
+	srb_t		*sp, **elem;
 	struct multi_sts_entry_fx00 *stsmfx;
 	struct qla_hw_data *ha = vha->hw;
 	uint32_t handle, hindex, handle_count, i;
@@ -2655,8 +2657,9 @@ qlafx00_multistatus_entry(struct scsi_qla_host *vha,
 		req = ha->req_q_map[que];
 
 		/* Validate handle. */
-		if (handle < req->num_outstanding_cmds)
-			sp = req->outstanding_cmds[handle];
+		if ((elem = nospec_array_ptr(req->outstanding_cmds, handle,
+						req->num_outstanding_cmds)))
+			sp = *elem;
 		else
 			sp = NULL;
 
