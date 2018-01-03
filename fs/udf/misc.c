@@ -51,6 +51,8 @@ struct genericFormat *udf_add_extendedattr(struct inode *inode, uint32_t size,
 	int offset;
 	uint16_t crclen;
 	struct udf_inode_info *iinfo = UDF_I(inode);
+	uint8_t *ea_dst, *ea_src;
+	uint32_t aal, ial;
 
 	ea = iinfo->i_ext.i_data;
 	if (iinfo->i_lenEAttr) {
@@ -100,33 +102,34 @@ struct genericFormat *udf_add_extendedattr(struct inode *inode, uint32_t size,
 
 		offset = iinfo->i_lenEAttr;
 		if (type < 2048) {
-			if (le32_to_cpu(eahd->appAttrLocation) <
-					iinfo->i_lenEAttr) {
-				uint32_t aal =
-					le32_to_cpu(eahd->appAttrLocation);
-				memmove(&ea[offset - aal + size],
-					&ea[aal], offset - aal);
+			aal = le32_to_cpu(eahd->appAttrLocation);
+			if ((ea_dst = nospec_array_ptr(ea, offset - aal + size,
+						       iinfo->i_lenEAttr)) &&
+			    (ea_src = nospec_array_ptr(ea, aal,
+						       iinfo->i_lenEAttr))) {
+				memmove(ea_dst, ea_src, offset - aal);
 				offset -= aal;
 				eahd->appAttrLocation =
 						cpu_to_le32(aal + size);
 			}
-			if (le32_to_cpu(eahd->impAttrLocation) <
-					iinfo->i_lenEAttr) {
-				uint32_t ial =
-					le32_to_cpu(eahd->impAttrLocation);
-				memmove(&ea[offset - ial + size],
-					&ea[ial], offset - ial);
+
+			ial = le32_to_cpu(eahd->impAttrLocation);
+			if ((ea_dst = nospec_array_ptr(ea, offset - ial + size,
+						       iinfo->i_lenEAttr)) &&
+			    (ea_src = nospec_array_ptr(ea, ial,
+						       iinfo->i_lenEAttr))) {
+				memmove(ea_dst, ea_src, offset - ial);
 				offset -= ial;
 				eahd->impAttrLocation =
 						cpu_to_le32(ial + size);
 			}
 		} else if (type < 65536) {
-			if (le32_to_cpu(eahd->appAttrLocation) <
-					iinfo->i_lenEAttr) {
-				uint32_t aal =
-					le32_to_cpu(eahd->appAttrLocation);
-				memmove(&ea[offset - aal + size],
-					&ea[aal], offset - aal);
+			aal = le32_to_cpu(eahd->appAttrLocation);
+			if ((ea_dst = nospec_array_ptr(ea, offset - aal + size,
+						       iinfo->i_lenEAttr)) &&
+			    (ea_src = nospec_array_ptr(ea, aal,
+						       iinfo->i_lenEAttr))) {
+				memmove(ea_dst, ea_src, offset - aal);
 				offset -= aal;
 				eahd->appAttrLocation =
 						cpu_to_le32(aal + size);
