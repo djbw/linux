@@ -1099,10 +1099,8 @@ struct wsm_tx_queue_params {
 };
 
 
-#define WSM_TX_QUEUE_SET(queue_params, queue, ack_policy, allowed_time,\
-		max_life_time)	\
+#define WSM_TX_QUEUE_SET(p, ack_policy, allowed_time, max_life_time)	\
 do {							\
-	struct wsm_set_tx_queue_params *p = &(queue_params)->params[queue]; \
 	p->ackPolicy = (ack_policy);				\
 	p->allowedMediumTime = (allowed_time);				\
 	p->maxTransmitLifetime = (max_life_time);			\

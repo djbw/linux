@@ -14,6 +14,7 @@
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <linux/etherdevice.h>
+#include <linux/compiler.h>
 
 #include "cw1200.h"
 #include "sta.h"
@@ -612,18 +613,19 @@ int cw1200_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 		   u16 queue, const struct ieee80211_tx_queue_params *params)
 {
 	struct cw1200_common *priv = dev->priv;
+	struct wsm_set_tx_queue_params *txq_params;
 	int ret = 0;
 	/* To prevent re-applying PM request OID again and again*/
 	bool old_uapsd_flags;
 
 	mutex_lock(&priv->conf_mutex);
 
-	if (queue < dev->queues) {
+	if ((txq_params = nospec_array_ptr(priv->tx_queue_params.params,
+					queue, dev->queues))) {
 		old_uapsd_flags = le16_to_cpu(priv->uapsd_info.uapsd_flags);
 
-		WSM_TX_QUEUE_SET(&priv->tx_queue_params, queue, 0, 0, 0);
-		ret = wsm_set_tx_queue_params(priv,
-					      &priv->tx_queue_params.params[queue], queue);
+		WSM_TX_QUEUE_SET(txq_params, 0, 0, 0);
+		ret = wsm_set_tx_queue_params(priv, txq_params, queue);
 		if (ret) {
 			ret = -EINVAL;
 			goto out;
