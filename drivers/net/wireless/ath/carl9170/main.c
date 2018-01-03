@@ -41,6 +41,7 @@
 #include <linux/module.h>
 #include <linux/etherdevice.h>
 #include <linux/random.h>
+#include <linux/compiler.h>
 #include <net/mac80211.h>
 #include <net/cfg80211.h>
 #include "hw.h"
@@ -1384,11 +1385,12 @@ static int carl9170_op_conf_tx(struct ieee80211_hw *hw,
 			       const struct ieee80211_tx_queue_params *param)
 {
 	struct ar9170 *ar = hw->priv;
+	const u8 *elem;
 	int ret;
 
 	mutex_lock(&ar->mutex);
-	if (queue < ar->hw->queues) {
-		memcpy(&ar->edcf[ar9170_qmap[queue]], param, sizeof(*param));
+	if ((elem = nospec_array_ptr(ar9170_qmap, queue, ar->hw->queues))) {
+		memcpy(&ar->edcf[*elem], param, sizeof(*param));
 		ret = carl9170_set_qos(ar);
 	} else {
 		ret = -EINVAL;
