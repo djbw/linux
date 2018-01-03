@@ -648,15 +648,13 @@ static void *m_start(struct seq_file *seq, loff_t *ppos,
 {
 	loff_t pos = *ppos;
 	unsigned extents = map->nr_extents;
+
+	/* paired with smp_wmb in map_write */
 	smp_rmb();
 
-	if (pos >= extents)
-		return NULL;
-
 	if (extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
-		return &map->extent[pos];
-
-	return &map->forward[pos];
+		return nospec_array_ptr(map->extent, pos, extents);
+	return nospec_array_ptr(map->forward, pos, extents);
 }
 
 static void *uid_m_start(struct seq_file *seq, loff_t *ppos)
