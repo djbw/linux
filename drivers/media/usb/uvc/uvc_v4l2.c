@@ -22,6 +22,7 @@
 #include <linux/mm.h>
 #include <linux/wait.h>
 #include <linux/atomic.h>
+#include <linux/compiler.h>
 
 #include <media/v4l2-common.h>
 #include <media/v4l2-ctrls.h>
@@ -810,6 +811,7 @@ static int uvc_ioctl_enum_input(struct file *file, void *fh,
 	struct uvc_entity *iterm = NULL;
 	u32 index = input->index;
 	int pin = 0;
+	__u8 *elem;
 
 	if (selector == NULL ||
 	    (chain->dev->quirks & UVC_QUIRK_IGNORE_SELECTOR_UNIT)) {
@@ -820,8 +822,9 @@ static int uvc_ioctl_enum_input(struct file *file, void *fh,
 				break;
 		}
 		pin = iterm->id;
-	} else if (index < selector->bNrInPins) {
-		pin = selector->baSourceID[index];
+	} else if ((elem = nospec_array_ptr(selector->baSourceID, index,
+					selector->bNrInPins))) {
+		pin = *elem;
 		list_for_each_entry(iterm, &chain->entities, chain) {
 			if (!UVC_ENTITY_IS_ITERM(iterm))
 				continue;
