@@ -81,9 +81,10 @@ struct dentry;
 static inline struct file *__fcheck_files(struct files_struct *files, unsigned int fd)
 {
 	struct fdtable *fdt = rcu_dereference_raw(files->fdt);
+	struct file __rcu **fdp;
 
-	if (fd < fdt->max_fds)
-		return rcu_dereference_raw(fdt->fd[fd]);
+	if ((fdp = nospec_array_ptr(fdt->fd, fd, fdt->max_fds)))
+		return rcu_dereference_raw(*fdp);
 	return NULL;
 }
 
