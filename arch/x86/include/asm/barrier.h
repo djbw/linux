@@ -24,6 +24,12 @@
 #define wmb()	asm volatile("sfence" ::: "memory")
 #endif
 
+/*
+ * CPUs without LFENCE don't really speculate much. Possibly fall back to IRET-to-self.
+ */
+#define __nospec_barrier() alternative("", "lfence", X86_FEATURE_LFENCE_RDTSC)
+#define nospec_barrier __nospec_barrier
+
 #ifdef CONFIG_X86_PPRO_FENCE
 #define dma_rmb()	rmb()
 #else
