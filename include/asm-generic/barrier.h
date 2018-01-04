@@ -59,7 +59,9 @@
  *
  * Architectures with a suitable memory barrier should provide an
  * implementation. This is non-portable, and generic code should use
- * nospec_ptr().
+ * nospec_{array_ptr,ptr}. Arch-specific code should define and use
+ * nospec_barrier() for usages where nospec_{array_ptr,ptr} is
+ * unsuitable.
  */
 #ifndef __nospec_barrier
 #define __nospec_barrier()		do { } while (0)
@@ -119,8 +121,6 @@
 									\
 	nospec_ptr(__arr + __idx, __arr, __arr + __sz);			\
 })
-
-#undef __nospec_barrier
 
 #ifndef __smp_mb
 #define __smp_mb()	mb()

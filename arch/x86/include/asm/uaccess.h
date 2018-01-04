@@ -43,6 +43,8 @@ static inline void set_fs(mm_segment_t fs)
 /*
  * Test whether a block of memory is a valid user space address.
  * Returns 0 if the range is valid, nonzero otherwise.
+ *
+ * We also disable speculation when a check fails.
  */
 static inline bool __chk_range_not_ok(unsigned long addr, unsigned long size, unsigned long limit)
 {
@@ -53,14 +55,19 @@ static inline bool __chk_range_not_ok(unsigned long addr, unsigned long size, un
 	 * important to subtract the size from the
 	 * limit, not add it to the address).
 	 */
-	if (__builtin_constant_p(size))
-		return unlikely(addr > limit - size);
+	if (__builtin_constant_p(size)) {
+		if (unlikely(addr > limit - size))
+			return true;
+		nospec_barrier();
+		return false;
+	}
 
 	/* Arbitrary sizes? Be careful about overflow */
 	addr += size;
-	if (unlikely(addr < size))
+	if (unlikely(addr < size || addr > limit))
 		return true;
-	return unlikely(addr > limit);
+	nospec_barrier();
+	return false;
 }
 
 #define __range_not_ok(addr, size, limit)				\
@@ -94,6 +101,8 @@ static inline bool __chk_range_not_ok(unsigned long addr, unsigned long size, un
  * Note that, depending on architecture, this function probably just
  * checks that the pointer is in the user space range - after calling
  * this function, memory access functions may still return -EFAULT.
+ *
+ * Stops speculation automatically
  */
 #define access_ok(type, addr, size)					\
 ({									\
