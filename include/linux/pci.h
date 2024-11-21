@@ -526,6 +526,9 @@ struct pci_dev {
 	u16		sel_ide_cap;	/* - Selective Stream register block */
 	int		nr_ide_mem;	/* - Address range limits for streams */
 #endif
+#ifdef CONFIG_PCI_TSM
+	struct pci_tsm *tsm;		/* TSM operation state */
+#endif
 	u16		acs_cap;	/* ACS Capability offset */
 	phys_addr_t	rom;		/* Physical address if not from BAR */
 	size_t		romlen;		/* Length if not from BAR */

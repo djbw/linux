@@ -572,3 +572,48 @@ Description:
 		enclosure-specific indications "specific0" to "specific7",
 		hence the corresponding led class devices are unavailable if
 		the DSM interface is used.
+
+What:		/sys/bus/pci/devices/.../tsm/
+Date:		July 2024
+Contact:	linux-coco@lists.linux.dev
+Description:
+		This directory only appears if a device supports CMA and IDE,
+		and only after a platform TSM (TEE Security Manager) driver has
+		loaded and evaluated this PCI device. After the 'add' uevent
+		notification for /sys/class/tsm/tsm0 is signaled scripts can
+		assume that all PCI devices in the system have been probed for
+		TEE I/O capability.
+
+What:		/sys/bus/pci/devices/.../tsm/connect
+Date:		July 2024
+Contact:	linux-coco@lists.linux.dev
+Description:
+		(RW) Writing "1" to this file triggers the platform TSM (TEE
+		Security Manager) to establish a connection with the device.
+		This typically includes an SPDM (DMTF Security Protocols and
+		Data Models) session over PCIe DOE (Data Object Exchange) and
+		may also include PCIe IDE (Integrity and Data Encryption)
+		establishment.
+
+What:		/sys/bus/pci/devices/.../authenticated
+Date:		July 2024
+Contact:	linux-pci@vger.kernel.org
+Description:
+		When the device's tsm/ directory is present authentication and
+		IDE establishment may be handled by the platform TSM (TEE Security
+		Manager). Otherwise, when the tsm/ directory is absent the
+		"authenticated" attribute follow the behavior specified in
+		Documentation/ABI/testing/sysfs-devices-spdm.
+
+		In the TSM case, the "authenticated" is read-only (0444) and the
+		"tsm/connect" attribute reflects whether the device is TSM
+		"connected" which includes not only CMA authentication, but
+		optionally IDE (link Integrity and Data encryption) if the TSM
+		deems that is necessary. When the device is disconnected from
+		the TSM, tsm/connect returns "0", then native PCI CMA may be
+		used to authenticate the device (without IDE or TSM
+		coordination).
+
+		The file is not visible if authentication is unsupported by the
+		device, or if PCI CMA support is disabled and the TSM
+		driver has no available authentication methods for the device.
